@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Person Detection</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .form-group input[type=file] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #333;
+        }
+        .form-group button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 30px;
+            text-align: center;
+            position: relative;
+        }
+        #result video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        .loader div {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #007BFF;
+            border-radius: 50%;
+            animation: loader-animation 0.8s linear infinite;
+        }
+        @keyframes loader-animation {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(0);
+            }
+        }
+        .response-time {
+            margin-top: 10px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Person Detection</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="videoFile">Upload a video file:</label>
+                <input type="file" id="videoFile" name="file" accept="video/mp4">
+            </div>
+            <div class="form-group">
+                <button type="submit" id="submitBtn">Upload & Detect Persons</button>
+            </div>
+        </form>
+        <div id="result">
+            <div class="loader">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <video controls></video>
+            <div class="response-time" id="responseTime"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var fileInput = document.getElementById('videoFile');
+            var file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a video file.');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/detect', true);
+
+            var startTime = new Date().getTime(); // Capture start time
+
+            xhr.onreadystatechange = function() {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+        var endTime = new Date().getTime(); // Capture end time
+        var responseTime = (endTime - startTime) / 1000; // Calculate response time in seconds
+
+        if (xhr.status === 200) {
+            var resultUrl = URL.createObjectURL(xhr.response);
+            var resultDiv = document.getElementById('result');
+            var videoElement = resultDiv.querySelector('video');
+            var loader = resultDiv.querySelector('.loader');
+            var responseTimeDiv = resultDiv.querySelector('.response-time');
+
+            videoElement.src = resultUrl;
+            videoElement.style.display = 'block';
+            loader.style.display = 'none';
+            responseTimeDiv.textContent = 'Response time: ' + responseTime.toFixed(2) + ' seconds'; // Display response time
+            responseTimeDiv.style.display = 'block';
+        } else {
+            alert('Error processing video: ' + xhr.responseText);
+        }
+    }
+};
+
+
+            xhr.responseType = 'blob';
+            xhr.send(formData);
+
+            // Display loader while waiting for response
+            var resultDiv = document.getElementById('result');
+            var loader = resultDiv.querySelector('.loader');
+            loader.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
